@@ -1,9 +1,25 @@
+import enum
 from urllib.request import Request, urlopen
 from bs4 import BeautifulSoup as bs4
 import concurrent.futures
-import re
+from progress_bar import printProgressBar
 
-BASE_URL = 'https://pokemondb.net/pokedex/'
+BASE_URL = 'https://pokemondb.net'
+
+def gather_pokemon_links() -> set:
+    dex_url = BASE_URL + '/pokedex/all'
+
+    # request connection and grab page
+    dex_request = Request(dex_url, headers={'User-Agent': "Mozilla/5.0"})
+    dex_client = urlopen(dex_request)
+    dex_html = dex_client.read()
+    dex_client.close()
+
+    # parse html
+    soup = bs4(dex_html, "html.parser")
+    pokemon_table = [p.find('a', class_='ent-name')['href'] for p in soup.find('table', id="pokedex").find('tbody').findAll('tr')]
+
+    return set(pokemon_table)
 
 def get_dex_number(soup: bs4) -> int:
     '''
@@ -66,7 +82,7 @@ def scrape_pokemon_page(link: str) -> dict:
     '''
     pokemon_data = {}
 
-    # sents and parses request
+    # sends and parses request
     poke_request = Request(link, headers={'User-Agent': "Mozilla/5.0"})
     poke_client = urlopen(poke_request)
     poke_html = poke_client.read()
@@ -99,8 +115,29 @@ def scrape_pokemon_page(link: str) -> dict:
 
     return pokemon_data
 
+def scrape_pokemon_data() -> list:
+    '''
+    Scrapes data from all pokemon pages and returns it
+    '''
+    out = []
+
+    # first find all links to pokemon entries
+    links = gather_pokemon_links()
+    l = len(links)
+
+    printProgressBar(0, l, prefix='Progress:', suffix='Complete', length=50)
+    for i, item in enumerate(links):
+        # gets pokemon data from the page
+        url = BASE_URL + item
+        out.append(scrape_pokemon_page(url))
+
+        # update progress bar
+        printProgressBar(i + 1, l, prefix='Progress:', suffix='Complete', length=50)
+
+    return out
+
 def test_cases() -> None:
-    test1 = BASE_URL + 'charizard'
+    test1 = BASE_URL + '/pokedex/charizard'
     poke_request = Request(test1, headers={'User-Agent': "Mozilla/5.0"})
     poke_client = urlopen(poke_request)
     poke_html = poke_client.read()
@@ -114,7 +151,7 @@ def test_cases() -> None:
     assert get_base_stats(poke_soup) == (78, 84, 78, 109, 85, 100, 534)
     assert get_generation(poke_soup) == 1
 
-    test2 = BASE_URL + 'kubfu'
+    test2 = BASE_URL + '/pokedex/kubfu'
     poke_request = Request(test2, headers={'User-Agent': "Mozilla/5.0"})
     poke_client = urlopen(poke_request)
     poke_html = poke_client.read()
@@ -131,11 +168,13 @@ def test_cases() -> None:
 def main() -> None:
     test_cases()
 
-    test_link = 'beautifly'
-    print(scrape_pokemon_page(BASE_URL + test_link))
+    # test_link = '/pokedex/beautifly'
+    # print(scrape_pokemon_page(BASE_URL + test_link))
 
-    test_link = 'charmander'
-    print(scrape_pokemon_page(BASE_URL + test_link))
+    # test_link = '/pokedex/charmander'
+    # print(scrape_pokemon_page(BASE_URL + test_link))
+
+    print(scrape_pokemon_data())
 
 if __name__ == '__main__':
     main()
