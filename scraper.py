@@ -2,7 +2,15 @@ from urllib.request import Request, urlopen
 from bs4 import BeautifulSoup as bs4
 import concurrent.futures
 
-BASE_URL = 'https://bulbapedia.bulbagarden.net'
+BASE_URL = 'https://pokemondb.net/pokedex/'
+
+def get_dex_number(soup: bs4) -> int:
+    '''
+    Grabs the national pokedex number from a pokemon's page
+    '''
+    entry_number = soup.find('table', class_='vitals-table').find('td').text
+
+    return int(entry_number)
 
 def scrape_pokemon_page(link: str) -> dict:
     '''
@@ -23,18 +31,20 @@ def scrape_pokemon_page(link: str) -> dict:
     '''
     pokemon_data = {}
 
-    poke_request = Request(link, headers={'User-Agent': "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.5112.79 Safari/537.36"})
+    poke_request = Request(link, headers={'User-Agent': "Mozilla/5.0"})
     poke_client = urlopen(poke_request)
     poke_html = poke_client.read()
     poke_client.close()
 
-    print(poke_html)
+    poke_soup = bs4(poke_html, "html.parser")
+
+    pokemon_data['dex#'] = get_dex_number(poke_soup)
 
     return pokemon_data
 
 def main() -> None:
-    test_link = '/wiki/Venasaur_(Pok%C3%A9mon)'
-    scrape_pokemon_page(BASE_URL + test_link)
+    test_link = 'charizard'
+    print(scrape_pokemon_page(BASE_URL + test_link))
 
 if __name__ == '__main__':
     main()
