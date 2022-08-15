@@ -8,6 +8,10 @@ from time import perf_counter
 
 BASE_URL = 'https://pokemondb.net'
 
+# global variables for the progress bar
+global_interval = 0
+global_length = -1
+
 def gather_pokemon_links() -> set:
     dex_url = BASE_URL + '/pokedex/all'
 
@@ -82,6 +86,8 @@ def scrape_pokemon_page(link: str) -> dict:
     11) Total
     12) Generation
     '''
+    global global_interval, global_length
+
     pokemon_data = {}
 
     # sends and parses request
@@ -115,22 +121,27 @@ def scrape_pokemon_page(link: str) -> dict:
 
     pokemon_data['generation'] = get_generation(poke_soup)
 
+    # increases the progress bar by 1
+    global_interval += 1
+    printProgressBar(global_interval, global_length, prefix='Progress:', suffix='Complete', length=50)
+
     return pokemon_data
 
 def scrape_pokemon_data() -> list:
     '''
     Scrapes data from all pokemon pages and returns it
     '''
+    global global_interval, global_length
 
     # first find all links to pokemon entries
     links = gather_pokemon_links()
-    l = len(links)
-
-    # printProgressBar(0, l, prefix='Progress:', suffix='Complete', length=50)
 
     # formats links to include the base URL
     url = BASE_URL + '{0}'
     new_links = set(map(url.format, links))
+    global_length = len(new_links)
+
+    printProgressBar(global_interval, global_length, prefix='Progress:', suffix='Complete', length=50)
 
     start = perf_counter()
     # add multithreading for scraping pokemon data
