@@ -1,8 +1,10 @@
 import enum
+from typing import Generator
 from urllib.request import Request, urlopen
 from bs4 import BeautifulSoup as bs4
 import concurrent.futures
 from progress_bar import printProgressBar
+from time import perf_counter
 
 BASE_URL = 'https://pokemondb.net'
 
@@ -119,22 +121,39 @@ def scrape_pokemon_data() -> list:
     '''
     Scrapes data from all pokemon pages and returns it
     '''
-    out = []
 
     # first find all links to pokemon entries
     links = gather_pokemon_links()
     l = len(links)
 
-    printProgressBar(0, l, prefix='Progress:', suffix='Complete', length=50)
-    for i, item in enumerate(links):
-        # gets pokemon data from the page
-        url = BASE_URL + item
-        out.append(scrape_pokemon_page(url))
+    # printProgressBar(0, l, prefix='Progress:', suffix='Complete', length=50)
 
-        # update progress bar
-        printProgressBar(i + 1, l, prefix='Progress:', suffix='Complete', length=50)
+    # formats links to include the base URL
+    url = BASE_URL + '{0}'
+    new_links = set(map(url.format, links))
 
-    return out
+    start = perf_counter()
+    # add multithreading for scraping pokemon data
+    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+        poke_list = executor.map(scrape_pokemon_page, new_links)
+    end = perf_counter()
+
+    print(f'Time: {end - start}')
+
+    # for i, item in enumerate(links):
+    #     # gets pokemon data from the page
+    #     url = BASE_URL + item
+    #     out.append(scrape_pokemon_page(url))
+
+    return poke_list
+
+def generator_to_string(gen: Generator) -> str:
+    out = ""
+
+    for e in gen:
+        out += str(e) + '\n'
+
+    return out[:-1]
 
 def test_cases() -> None:
     test1 = BASE_URL + '/pokedex/charizard'
@@ -174,7 +193,12 @@ def main() -> None:
     # test_link = '/pokedex/charmander'
     # print(scrape_pokemon_page(BASE_URL + test_link))
 
-    print(scrape_pokemon_data())
+    pokemon_list = scrape_pokemon_data()
+
+    # writes contents of list to a file
+    with open('list.txt', 'w', encoding='utf-8') as f:
+        f.write(generator_to_string(pokemon_list))
+        f.close()
 
 if __name__ == '__main__':
     main()
