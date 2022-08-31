@@ -15,5 +15,9 @@ A web scraper for pokemon data in Python, using pokemondb.net
 3. Run `scraper.py`
 4. After a delay of ~70 seconds with the default workers, a file named `list.txt` will contain all the collected data.
 
+## Known issues
+
+- Seemingly randomly, the scraper will fail at the last moment and crash. Given its inconsistency, it's difficult for me to figure out the problem.
+
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
