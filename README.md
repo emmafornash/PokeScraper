@@ -1,6 +1,6 @@
 # PokéScraper
 
-A web scraper for pokemon data in Python, using pokemondb.net
+A web scraper for Pokémon data in Python, using pokemondb.net
 
 ## How to Use
 
@@ -13,7 +13,7 @@ A web scraper for pokemon data in Python, using pokemondb.net
 1. Clone this project
 2. Install dependencies above - `pip install beautifulsoup4`
 3. Run `scraper.py`
-4. After a delay of ~70 seconds with the default workers, a file named `list.txt` will contain all the collected data.
+4. After a delay of ~70 seconds with the default number of workers, a file named `list.txt` will contain all the collected data.
 
 ## Known issues
 
