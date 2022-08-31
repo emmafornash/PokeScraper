@@ -1,4 +1,4 @@
-import enum
+from operator import itemgetter
 from typing import Generator
 from urllib.request import Request, urlopen
 from bs4 import BeautifulSoup as bs4
@@ -127,9 +127,12 @@ def scrape_pokemon_page(link: str) -> dict:
 
     return pokemon_data
 
-def scrape_pokemon_data() -> list:
+def scrape_pokemon_data(workers: int=8) -> list:
     '''
     Scrapes data from all pokemon pages and returns it
+    
+    Arguments:
+    workers -- the number of threads to be used by concurrent.futures (default 8)
     '''
     global global_interval, global_length
 
@@ -138,14 +141,15 @@ def scrape_pokemon_data() -> list:
 
     # formats links to include the base URL
     url = BASE_URL + '{0}'
-    new_links = set(map(url.format, links))
+    new_links = list(map(url.format, links))
     global_length = len(new_links)
 
+    # creates a progress bar
     printProgressBar(global_interval, global_length, prefix='Progress:', suffix='Complete', length=50)
 
     start = perf_counter()
     # add multithreading for scraping pokemon data
-    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as executor:
         poke_list = executor.map(scrape_pokemon_page, new_links)
     end = perf_counter()
 
@@ -156,7 +160,9 @@ def scrape_pokemon_data() -> list:
     #     url = BASE_URL + item
     #     out.append(scrape_pokemon_page(url))
 
-    return poke_list
+    # outputs a sorted list of all pokemon
+    return sorted(poke_list, key=itemgetter('dex#'))
+    # return poke_list
 
 def generator_to_string(gen: Generator) -> str:
     out = ""
