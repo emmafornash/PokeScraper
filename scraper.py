@@ -2,6 +2,7 @@ from operator import itemgetter
 from typing import Generator
 from urllib.request import Request, urlopen
 from bs4 import BeautifulSoup as bs4
+import pandas as pd
 import concurrent.futures
 from progress_bar import printProgressBar
 from time import perf_counter
@@ -161,8 +162,8 @@ def scrape_pokemon_data(workers: int=8) -> list:
     #     out.append(scrape_pokemon_page(url))
 
     # outputs a sorted list of all pokemon
-    return sorted(poke_list, key=itemgetter('dex#'))
     # return poke_list
+    return sorted(poke_list, key=itemgetter('dex#'))
 
 def generator_to_string(gen: Generator) -> str:
     out = ""
@@ -212,10 +213,15 @@ def main() -> None:
 
     pokemon_list = scrape_pokemon_data()
 
+    pokemon_dataframe = pd.DataFrame(pokemon_list)
+    pokemon_dataframe = pokemon_dataframe.set_index('dex#')
+
     # writes contents of list to a file
-    with open('list.txt', 'w', encoding='utf-8') as f:
-        f.write(generator_to_string(pokemon_list))
-        f.close()
+    # with open('list.txt', 'w', encoding='utf-8') as f:
+    #     f.write(generator_to_string(pokemon_list))
+    #     f.close()
+
+    pokemon_dataframe.to_csv('pokemon.csv')
 
 if __name__ == '__main__':
     main()
